@@ -1,6 +1,5 @@
 # TODO: totaal bestand automatisch laten downloaden via een request naar de PublicAPI: https://public.ep-online.nl/swagger/index.html
-
-# RVO: Bij een dubbel label geldt altijd de meest recente opnamedatum is het actuele label.
+# RVO: Bij een dubbel label geldt altijd dat de meest recente opnamedatum is het actuele label.
 
 from psycopg2.extras import RealDictCursor
 import psycopg2
@@ -94,32 +93,19 @@ for line in csvreader:
     Pand_status = line[h["Pand_status"]].strip()
     if Pand_status == 'Vergunningsaanvraag':
         continue
-    # if not Pand_status in s.keys():
-        # s[Pand_status] = 1
-    # else:
-        # s[Pand_status] += 1
     Pand_opnamedatum = line[h["Pand_opnamedatum"]].strip()
     year = int(Pand_opnamedatum[:4])
     month = int(Pand_opnamedatum[4:6])
     day = int(Pand_opnamedatum[6:])
     Pand_opnamedatum = datetime.date(year, month, day)
-    # Pand_detailaanduiding = line[h["Pand_detailaanduiding"]].strip()
     if Pand_energieklasse != "":
         Pand_bagverblijfsobjectid = line[h["Pand_bagverblijfsobjectid"]].strip()
         Pand_bagligplaatsid = line[h["Pand_bagligplaatsid"]].strip()
         Pand_bagstandplaatsid = line[h["Pand_bagstandplaatsid"]].strip()
         if Pand_bagverblijfsobjectid != "":
             # vbo
-            # if Pand_bagverblijfsobjectid == "0363010000593514":
-                # print(line)
             if Pand_bagverblijfsobjectid in vbo_ids.keys():
                 dubbel += 1
-                # print(Pand_opnamedatum, Pand_energieklasse)
-                # print(vbo_ids[Pand_bagverblijfsobjectid][2], vbo_ids[Pand_bagverblijfsobjectid][0])
-                
-                # if "%s %s" % (Pand_opnamedatum, Pand_energieklasse) == "2014-04-08 A" and "%s %s" % (vbo_ids[Pand_bagverblijfsobjectid][2], vbo_ids[Pand_bagverblijfsobjectid][0]) == "2019-03-13 G":
-                    # print(Pand_bagverblijfsobjectid)
-                    # sys.exit()
                 if Pand_opnamedatum > vbo_ids[Pand_bagverblijfsobjectid][1]:
                     vbo_ids[Pand_bagverblijfsobjectid] = [Pand_energieklasse,Pand_opnamedatum]
             else:
@@ -148,16 +134,12 @@ for line in csvreader:
             Pand_postcode = line[h["Pand_postcode"]].strip()
             Pand_huisnummer = line[h["Pand_huisnummer"]].strip()
             Pand_huisnummer_toev = line[h["Pand_huisnummer_toev"]].strip()
-            
-            # Pand_bagpandid = line[h["Pand_bagpandid"]].strip()
-            # if not Pand_bagpandid == "":
-                # print(Pand_bagpandid) # komt niet voor!
+
             if "%s%s%s" % (Pand_postcode,Pand_huisnummer,Pand_huisnummer_toev) != "":
                 sql_string = '''select adresseerbaarobject_id, typeadresseerbaarobject from bag.adres_plus_energielabel where pchn_compare = '%s %s%s';''' % (Pand_postcode.upper(), Pand_huisnummer.upper(), Pand_huisnummer_toev.upper())
                 cur.execute(sql_string)
                 row = cur.fetchone()
                 if row != None:
-                    # print(row['adresseerbaarobject_id'], row['typeadresseerbaarobject'])
                     if row['typeadresseerbaarobject'] == 'Verblijfsobject':
                         Pand_bagverblijfsobjectid = row['adresseerbaarobject_id']
                         if Pand_bagverblijfsobjectid in vbo_ids.keys():
@@ -195,8 +177,6 @@ for line in csvreader:
             else:
                 # geen adres
                 f += 1
-                # if Pand_status != 'Vergunningsaanvraag':
-                    # print(Pand_status)
     else:
         # geen energielabel
         g += 1
@@ -231,6 +211,3 @@ result = {
 'totaal': totaal
 }
 pprint(result)
-
-# print(s)
-# {'Vergunningsaanvraag': 105836, 'Bestaand': 583535, '': 4100629, 'Oplevering': 50704}
